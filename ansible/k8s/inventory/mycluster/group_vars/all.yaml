@@ -1,4 +1,7 @@
 ---
+# Skip hostname override (hostnamectl fails on KVM@TACC via dbus)
+override_system_hostname: false
+
 # Container engine - change from default containerd
 container_manager: docker
 

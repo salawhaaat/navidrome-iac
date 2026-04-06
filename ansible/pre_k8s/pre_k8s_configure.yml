@@ -14,9 +14,10 @@
       systemd:
         name: firewalld
         masked: yes
+      ignore_errors: yes
 
 - name: Set up insecure registry for Docker
-  hosts: node1,node2,node3
+  hosts: all
   become: yes
 
   vars:
@@ -41,8 +42,7 @@
         dest: /etc/docker/daemon.json
         content: |
           {
-            "registry-mirrors": ["http://kvm-dyn-129-114-25-246.tacc.chameleoncloud.org:5000"],
-            "insecure-registries": ["{{ insecure_registry }}", "kvm-dyn-129-114-25-246.tacc.chameleoncloud.org:5000"]
+            "insecure-registries": ["{{ insecure_registry }}"]
           }
         owner: root
         group: root

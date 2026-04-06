@@ -1,5 +1,10 @@
 navidrome:
   externalIP: "0.0.0.0"
+  # Optional: set API keys to enable Last.fm/Spotify integrations
+  lastfmApiKey: ""
+  lastfmSecret: ""
+  spotifyClientId: ""
+  spotifyClientSecret: ""
 
 minio:
   externalIP: "0.0.0.0"

@@ -1,0 +1,37 @@
+# Terraform
+tf/**/.terraform/
+tf/**/*.tfstate
+tf/**/*.tfstate.backup
+tf/**/.terraform.lock.hcl
+tf/**/terraform.tfvars
+tf/**/override.tf
+tf/**/crash.log
+
+# Ansible secrets
+ansible/**/*.vault
+ansible/**/*vault*
+*.retry
+
+# Kubeconfig
+*kubeconfig*
+*.kubeconfig
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Local env files
+.env
+*.env.local

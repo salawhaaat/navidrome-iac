@@ -40,7 +40,7 @@ spec:
     spec:
       containers:
         - name: navidrome
-          image: deluan/navidrome:latest
+          image: registry.kube-system.svc.cluster.local:5000/navidrome-custom:latest
           ports:
             - containerPort: 4533
           resources:
@@ -57,6 +57,35 @@ spec:
               value: /data
             - name: ND_LOGLEVEL
               value: info
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: password
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: navidrome_dbname
+            - name: ND_DBPATH
+              value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres/$(POSTGRES_DB)?sslmode=disable"
+            {{- if .Values.navidrome.lastfmApiKey }}
+            - name: ND_LASTFM_APIKEY
+              value: {{ .Values.navidrome.lastfmApiKey | quote }}
+            - name: ND_LASTFM_SECRET
+              value: {{ .Values.navidrome.lastfmSecret | quote }}
+            {{- end }}
+            {{- if .Values.navidrome.spotifyClientId }}
+            - name: ND_SPOTIFY_ID
+              value: {{ .Values.navidrome.spotifyClientId | quote }}
+            - name: ND_SPOTIFY_SECRET
+              value: {{ .Values.navidrome.spotifyClientSecret | quote }}
+            {{- end }}
           volumeMounts:
             - name: navidrome-data
               mountPath: /data

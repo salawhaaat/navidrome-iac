@@ -1,5 +1,18 @@
 ---
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  namespace: navidrome-platform
+data:
+  init.sh: |
+    #!/bin/bash
+    set -e
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
+      SELECT 'CREATE DATABASE "'"$NAVIDROME_DB"'"' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$NAVIDROME_DB')\gexec
+    EOSQL
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: postgres-pvc
@@ -29,6 +42,13 @@ spec:
       containers:
         - name: postgres
           image: postgres:18
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
           env:
             - name: POSTGRES_USER
               valueFrom:
@@ -45,15 +65,25 @@ spec:
                 secretKeyRef:
                   name: postgres-credentials
                   key: dbname
+            - name: NAVIDROME_DB
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: navidrome_dbname
           ports:
             - containerPort: 5432
           volumeMounts:
             - name: postgres-storage
               mountPath: /var/lib/postgresql
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d
       volumes:
         - name: postgres-storage
           persistentVolumeClaim:
             claimName: postgres-pvc
+        - name: init-scripts
+          configMap:
+            name: postgres-init
 ---
 apiVersion: v1
 kind: Service

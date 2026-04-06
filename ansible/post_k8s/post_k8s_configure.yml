@@ -1,6 +1,6 @@
 ---
 - name: Post-Install kubectl Setup
-  hosts: node1,node2
+  hosts: node1
   become: yes
   vars:
     ansible_user: cc
@@ -32,7 +32,7 @@
         msg: "{{ kubectl_output.stdout_lines }}"
 
 - name: Add User to Docker Group
-  hosts: node1,node2,node3
+  hosts: all
   become: yes
   tasks:
 
@@ -70,7 +70,7 @@
       command: sysctl --system
 
 - name: Avoid using private interface for DNS
-  hosts: node1,node2,node3
+  hosts: all
   become: yes
   tasks:
     - name: Set DNS for interface ens4

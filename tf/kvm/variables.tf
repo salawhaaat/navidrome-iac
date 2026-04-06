@@ -11,16 +11,15 @@ variable "key" {
   default     = "id_rsa_chameleon"
 }
 
-variable "reservation" {
-  description = "UUID of the reserved flavor"
+variable "reservation_id" {
+  description = "Blazar reservation ID from KVM@TACC lease — used as flavor_id for flavor:instance reservations"
   type        = string
 }
+
 
 variable "nodes" {
   type = map(string)
   default = {
     "node1" = "192.168.1.11"
-    "node2" = "192.168.1.12"
-    "node3" = "192.168.1.13"
   }
 }

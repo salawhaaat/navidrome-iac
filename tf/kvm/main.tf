@@ -1,3 +1,4 @@
+
 resource "openstack_networking_network_v2" "private_net" {
   name                  = "private-net-mlops-${var.suffix}"
   port_security_enabled = false
@@ -22,32 +23,28 @@ resource "openstack_networking_port_v2" "private_net_ports" {
   }
 }
 
-resource "openstack_networking_port_v2" "sharednet1_ports" {
+resource "openstack_networking_port_v2" "public_net_ports" {
   for_each   = var.nodes
-    name       = "sharednet1-${each.key}-mlops-${var.suffix}"
-    network_id = data.openstack_networking_network_v2.sharednet1.id
-    security_group_ids = [
-      data.openstack_networking_secgroup_v2.allow_ssh.id,
-      data.openstack_networking_secgroup_v2.allow_9001.id,
-      data.openstack_networking_secgroup_v2.allow_8000.id,
-      data.openstack_networking_secgroup_v2.allow_8080.id,
-      data.openstack_networking_secgroup_v2.allow_8081.id,
-      data.openstack_networking_secgroup_v2.allow_8082.id,
-      data.openstack_networking_secgroup_v2.allow_http_80.id,
-      data.openstack_networking_secgroup_v2.allow_9090.id
-    ]
+  name       = "public_net-${each.key}-mlops-${var.suffix}"
+  network_id = data.openstack_networking_network_v2.public_net.id
+
+  security_group_ids = [
+    "833aa0fa-62f6-4eac-8ddf-510bb3441da3", # default
+    "3c28aa5b-1e89-4037-978c-c4bbdcc90782", # allow-ssh-proj05
+    "d8f27991-e45c-4a62-a72f-69edaa1076de", # navidrome-sg-proj05
+  ]
 }
 
 resource "openstack_compute_instance_v2" "nodes" {
   for_each = var.nodes
 
-  name        = "${each.key}-mlops-${var.suffix}"
-  image_name  = "CC-Ubuntu24.04"
-  flavor_id   = var.reservation
-  key_pair    = var.key
+  name      = "${each.key}-mlops-${var.suffix}"
+  image_name = "CC-Ubuntu24.04"
+  flavor_id  = var.reservation_id
+  key_pair   = var.key
 
   network {
-    port = openstack_networking_port_v2.sharednet1_ports[each.key].id
+    port = openstack_networking_port_v2.public_net_ports[each.key].id
   }
 
   network {
@@ -62,8 +59,29 @@ resource "openstack_compute_instance_v2" "nodes" {
 
 }
 
+# Open required ports on navidrome-sg-proj05 (existing shared security group)
+locals {
+  navidrome_sg_id = "d8f27991-e45c-4a62-a72f-69edaa1076de"
+  service_ports   = [4533, 8000, 9000, 9001]
+}
+
+resource "openstack_networking_secgroup_rule_v2" "navidrome_ports" {
+  for_each          = toset([for p in local.service_ports : tostring(p)])
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = tonumber(each.value)
+  port_range_max    = tonumber(each.value)
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = local.navidrome_sg_id
+
+  lifecycle {
+    ignore_changes = all  # rules may already exist from manual setup
+  }
+}
+
 resource "openstack_networking_floatingip_v2" "floating_ip" {
   pool        = "public"
-  description = "MLOps IP for ${var.suffix}"
-  port_id     = openstack_networking_port_v2.sharednet1_ports["node1"].id
+  description = "Navidrome IP for ${var.suffix}"
+  port_id     = openstack_networking_port_v2.public_net_ports["node1"].id
 }
