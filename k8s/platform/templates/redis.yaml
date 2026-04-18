@@ -16,12 +16,12 @@ data:
     maxmemory-policy allkeys-lru
     
     # Persistence (RDB snapshots)
-    save 900 1      # Save if 1+ changes in 15 min
-    save 300 10     # Save if 10+ changes in 5 min
-    save 60 10000   # Save if 10000+ changes in 60 sec
+    save 900 1
+    save 300 10
+    save 60 10000
     
-    # Append-only file (AOF) - optional, adds durability
-    appendonly no   # Can enable to: appendonly yes
+    # Append-only file (AOF)
+    appendonly no
     appendfsync everysec
     
     # Key expiration
