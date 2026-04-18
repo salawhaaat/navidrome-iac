@@ -2,53 +2,38 @@
 
 Infrastructure-as-code for the Navidrome MLOps course project (ECE-GY 9183).
 
-**Apr 20 System Implementation:** Complete production-ready ML platform with multi-node Kubernetes, monitoring (Prometheus/Grafana), autoscaling (HPA), GPU support, and comprehensive safeguarding mechanisms.
+Provisions a Kubernetes cluster on Chameleon Cloud (KVM@TACC) and deploys:
+- **Navidrome** — music server with ML recommendation engine
+- **MLflow** — model registry and experiment tracking
+- **PostgreSQL** — shared database (MLflow + Navidrome)
+- **MinIO** — S3-compatible object storage
+- **Redis** — cache (sessions, embeddings, features)
+- **Prometheus + Grafana + Alertmanager** — monitoring and alerting
+- **HPA** — autoscaling for MLflow and Navidrome
 
-Provisions a **multi-node Kubernetes cluster** on Chameleon Cloud (KVM@TACC) and deploys:
-- 🎵 **Navidrome** — music server with recommendation engine
-- 🤖 **MLflow** — model registry & experiment tracking
-- 🗄️ **PostgreSQL** — backend database
-- 📦 **MinIO** — S3-compatible object storage
-- 📊 **Prometheus + Grafana + Alertmanager** — monitoring stack
-- 📈 **HPA** — autoscaling for MLflow & Navidrome
-- 🖥️ **NVIDIA GPU support** — optional GPU node for training/inference
-
----
-
-## Getting Started
-
-### 🚀 Quick Start (30 min read, 90 min deploy)
-→ **[QUICKSTART.md](QUICKSTART.md)** — TL;DR deployment guide with all steps
-
-### 📋 Full Deployment Guide  
-→ **[DEPLOYMENT.md](DEPLOYMENT.md)** — Phase-by-phase walkthrough with troubleshooting
-
-### 🛡️ Safeguarding Plan
-→ **[docs/SAFEGUARDING.md](docs/SAFEGUARDING.md)** — Fairness, explainability, privacy, accountability, robustness mechanisms
-
-### 📝 Latest Updates (Apr 20)
-→ **[UPDATES_APR20.md](UPDATES_APR20.md)** — Summary of all changes for system implementation
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the service map and resource requirements.
+See [docs/SAFEGUARDING.md](docs/SAFEGUARDING.md) for the safeguarding plan.
 
 ---
 
 ## Repo Layout
 
 ```
-tf/kvm/                 Terraform — multi-node VMs, networks, floating IP, security groups
+tf/kvm/                 Terraform — VMs, networks, floating IP, security groups
 ansible/
   pre_k8s/              Node prep (firewalld, Docker registry)
   k8s/kubespray/        Kubespray submodule — Kubernetes install
-  k8s/inventory/        Kubespray inventory (multi-node cluster)
+  k8s/inventory/        Kubespray inventory
   post_k8s/             Post-install (kubectl, ArgoCD, Argo Workflows/Events)
 k8s/
-  platform/             Helm chart — Navidrome, MLflow, PostgreSQL, MinIO, HPA
+  platform/             Helm chart — Navidrome, MLflow, PostgreSQL, MinIO, Redis, HPA
   monitoring/           Helm chart — Prometheus, Grafana, Alertmanager, NVIDIA plugin
   staging/              Staging env deployment
   canary/               Canary env deployment
   production/           Production env deployment
-workflows/              Argo WorkflowTemplates (train, serve, promote, GPU jobs)
-docs/                   ARCHITECTURE.md, SAFEGUARDING.md
-Makefile                Full deploy automation (terraform, ansible, helm, monitoring, GPU)
+workflows/              Argo WorkflowTemplates (train, build, test, promote, GPU)
+docs/                   Architecture, safeguarding plan
+Makefile                Full deploy automation
 ```
 
 ---
@@ -85,7 +70,7 @@ kubectl cluster-info
 kubectl get pods -A
 ```
 
-**Full instructions:** See [DEPLOYMENT.md](DEPLOYMENT.md) or [QUICKSTART.md](QUICKSTART.md)
+**Full instructions:** See [DEPLOYMENT.md](DEPLOYMENT.md)
 
 After deploy, services are available at:
 
@@ -127,4 +112,4 @@ on the author's specifications.
 
 Per course policy: *"You tell the LLM what to do, based on the design you developed."*
 
-AI-assisted files are noted in [.claude/](.claude/).
+Commits that include AI-generated code note this in the commit message.
