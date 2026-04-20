@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: cron-finetune
+spec:
+  # Runs every day at 11:00 PM UTC
+  schedule: "0 23 * * *"
+  timezone: "UTC"
+
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+
+  workflowSpec:
+    entrypoint: finetune-pipeline
+
+    arguments:
+      parameters:
+      - name: finetune-data-version
+        value: "v20260419-finetune-001"
+      - name: mi100-host
+        value: "129.114.108.202"
+
+    templates:
+    - name: finetune-pipeline
+      steps:
+      - - name: ssh-finetune
+          template: ssh-and-run
+
+    - name: ssh-and-run
+      container:
+        image: alpine:3.19
+        command: [sh, -c]
+        args:
+          - |
+            set -eu
+            apk add --no-cache openssh-client
+
+            mkdir -p ~/.ssh
+            cp /secret/id_rsa ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            ssh-keyscan -H "{{workflow.parameters.mi100-host}}" >> ~/.ssh/known_hosts 2>/dev/null
+
+            ssh -i ~/.ssh/id_rsa \
+              -o StrictHostKeyChecking=no \
+              cc@{{workflow.parameters.mi100-host}} \
+              "cd /home/cc/navidrome_mlops && git pull origin navidrome-custom && bash train/run_finetune.sh '{{workflow.parameters.finetune-data-version}}'"
+        volumeMounts:
+        - name: ssh-key
+          mountPath: /secret
+          readOnly: true
+
+      volumes:
+      - name: ssh-key
+        secret:
+          secretName: chameleon-ssh-key
