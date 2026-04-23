@@ -37,6 +37,11 @@ spec:
         - name: serve
           image: registry.kube-system.svc.cluster.local:5000/navidrome-serve:latest
           imagePullPolicy: Always
+          command: [sh, -c]
+          args:
+            - |
+              sed -i 's/            top_n=1,$/            top_n=1,\n            exclude_sets=[set()],/' /app/app.py
+              exec uvicorn app:app --host 0.0.0.0 --port 8080
           ports:
             - containerPort: 8080
               name: http
