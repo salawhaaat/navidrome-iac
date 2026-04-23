@@ -11,18 +11,6 @@ spec:
     requests:
       storage: 2Gi
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: navidrome-music-pvc
-  namespace: navidrome-platform
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -96,8 +84,9 @@ spec:
           persistentVolumeClaim:
             claimName: navidrome-data-pvc
         - name: navidrome-music
-          persistentVolumeClaim:
-            claimName: navidrome-music-pvc
+          hostPath:
+            path: /mnt/music-vol/music/audio_complete
+            type: Directory
 ---
 apiVersion: v1
 kind: Service

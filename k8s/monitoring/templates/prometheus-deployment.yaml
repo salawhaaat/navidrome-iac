@@ -59,6 +59,8 @@ spec:
       name: http
   selector:
     app: prometheus
+  externalIPs:
+    - {{ .Values.prometheus.externalIP }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -94,6 +96,8 @@ spec:
         prometheus.io/port: '{{ .Values.prometheus.port }}'
     spec:
       serviceAccountName: prometheus
+      securityContext:
+        runAsUser: 0
       containers:
         - name: prometheus
           image: {{ .Values.prometheus.image }}

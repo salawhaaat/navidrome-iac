@@ -50,7 +50,7 @@ spec:
             - name: DEVICE
               value: "cpu"
             - name: MINIO_URL
-              value: "http://minio.navidrome-platform.svc.cluster.local:9000"
+              value: ""
             - name: MINIO_USER
               value: "minioadmin"
             - name: MINIO_PASSWORD

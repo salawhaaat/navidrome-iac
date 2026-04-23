@@ -77,6 +77,8 @@ spec:
       name: http
   selector:
     app: alertmanager
+  externalIPs:
+    - {{ .Values.alertmanager.externalIP }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

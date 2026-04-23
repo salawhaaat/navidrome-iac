@@ -51,11 +51,13 @@ kubeconfig:
 	ssh -i ~/.ssh/id_rsa_chameleon -o StrictHostKeyChecking=no cc@$(FLOATING_IP) \
 		"cat ~/.kube/config" > $(KUBECONFIG)
 	@echo "Kubeconfig saved to $(KUBECONFIG)"
-	@echo "Start SSH tunnel before using helm/kubectl locally:"
-	@echo "  ssh -i ~/.ssh/id_rsa_chameleon -L 6443:127.0.0.1:6443 -N cc@$(FLOATING_IP) &"
+	@echo "Starting SSH tunnel..."
+	@ssh -i ~/.ssh/id_rsa_chameleon -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=999 -L 6443:127.0.0.1:6443 -N cc@$(FLOATING_IP) &
+	@sleep 2
+	@echo "SSH tunnel started (PID in background)"
 
 ## 6. Install platform Helm chart
-helm-install:
+helm-install: kubeconfig
 	KUBECONFIG=$(KUBECONFIG) helm install navidrome-platform ./k8s/platform \
 		--namespace navidrome-platform \
 		--create-namespace \
@@ -108,6 +110,13 @@ monitoring-upgrade:
 $(VENV_ANSIBLE):
 	python3 -m venv $(VENV)
 	$(VENV)/bin/pip install -q -r $(KUBESPRAY_DIR)/requirements.txt
+
+## Open persistent SSH tunnel to Kubernetes API (run in background)
+tunnel:
+	@echo "Starting persistent SSH tunnel to $(FLOATING_IP)..."
+	@ssh -i ~/.ssh/id_rsa_chameleon -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=999 -L 6443:127.0.0.1:6443 -N cc@$(FLOATING_IP) &
+	@sleep 2
+	@echo "Tunnel running. KUBECONFIG=$(KUBECONFIG)"
 
 ## Wait for SSH to be ready (handles post-kubespray reboot)
 wait-ssh:
