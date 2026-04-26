@@ -103,12 +103,17 @@ spec:
             - name: artifacts
               mountPath: /app/artifacts
           resources:
+            # 4Gi limit needed for the track_dict load: the parquet itself
+            # is 108 MB but pyarrow's table representation + the 745k-entry
+            # Python dict (~300 MB) + model (191 MB) + vocab (~100 MB) +
+            # transient buffers peak around 1.5-2 GB. 2 GiB OOM-killed.
+            # Steady-state usage is ~1.5 GB after startup.
             requests:
               cpu: 200m
-              memory: 512Mi
+              memory: 1Gi
             limits:
               cpu: 1000m
-              memory: 2Gi
+              memory: 4Gi
           livenessProbe:
             httpGet:
               path: /health
