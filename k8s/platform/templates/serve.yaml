@@ -55,15 +55,21 @@ spec:
             - name: DEVICE
               value: "cpu"
             - name: MINIO_URL
-              value: ""
+              value: "http://minio.navidrome-platform.svc.cluster.local:9000"
             - name: MINIO_USER
               value: "minioadmin"
             - name: MINIO_PASSWORD
-              value: "navidrome2026"
+              value: "MyMinioPassword123"
             - name: MINIO_BUCKET
               value: "artifacts"
             - name: MINIO_POPULARITY_KEY
-              value: "popularity.npy"
+              value: "shared/v20260418-001/popularity.npy"
+            - name: POPULARITY_PATH
+              # Pin to /tmp so a stale empty file on the artifacts PVC (left
+              # behind by a failed download) can't break startup. The boto3
+              # download in app.py opens the dest file before fetching, so a
+              # 404 leaves an empty file that np.load chokes on.
+              value: "/tmp/popularity.npy"
             - name: TRACK_META_BUCKET
               value: "navidrome-metadata"
             - name: TRACK_META_KEY
