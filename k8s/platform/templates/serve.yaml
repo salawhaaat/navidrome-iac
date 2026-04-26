@@ -70,35 +70,42 @@ spec:
               # download in app.py opens the dest file before fetching, so a
               # 404 leaves an empty file that np.load chokes on.
               value: "/tmp/popularity.npy"
+            # Track metadata + audio both read from Chameleon RGW S3 directly.
+            # Swift is the durable source of truth — survives MinIO wipes.
+            # boto3 talks to RGW's S3-compatible endpoint with EC2 creds.
+            # Model + popularity stay on MinIO (MLflow's backing store).
             - name: TRACK_META_BUCKET
-              value: "navidrome-metadata"
-            - name: TRACK_META_KEY
-              value: "track_dict.parquet"
-            # Swift is the durable source of truth for track_dict — survives
-            # MinIO wipes during cluster rebuilds. App falls back to MinIO if
-            # the credential ID env is empty.
-            - name: OS_AUTH_URL
-              value: "https://chi.uc.chameleoncloud.org:5000/v3"
-            - name: OS_REGION_NAME
-              value: "CHI@UC"
-            - name: OS_INTERFACE
-              value: "public"
-            - name: OS_APPLICATION_CREDENTIAL_ID
-              valueFrom:
-                secretKeyRef:
-                  name: swift-creds
-                  key: application_credential_id
-            - name: OS_APPLICATION_CREDENTIAL_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: swift-creds
-                  key: application_credential_secret
-            - name: SWIFT_TRACK_META_CONTAINER
               value: "navidrome-bucket-proj05"
-            - name: SWIFT_TRACK_META_KEY
+            - name: TRACK_META_KEY
               value: "metadata/track_dict.parquet"
+            - name: TRACK_META_ENDPOINT_URL
+              value: "https://chi.uc.chameleoncloud.org:7480"
+            - name: TRACK_META_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: chameleon-s3-creds
+                  key: access_key_id
+            - name: TRACK_META_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: chameleon-s3-creds
+                  key: secret_access_key
             - name: AUDIO_BUCKET
-              value: "audio-cache"
+              value: "navidrome-bucket-proj05"
+            - name: AUDIO_KEY_PREFIX
+              value: "audio_complete/"
+            - name: AUDIO_ENDPOINT_URL
+              value: "https://chi.uc.chameleoncloud.org:7480"
+            - name: AUDIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: chameleon-s3-creds
+                  key: access_key_id
+            - name: AUDIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: chameleon-s3-creds
+                  key: secret_access_key
           volumeMounts:
             - name: artifacts
               mountPath: /app/artifacts
