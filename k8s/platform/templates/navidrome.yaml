@@ -11,6 +11,46 @@ spec:
     requests:
       storage: 2Gi
 ---
+# PersistentVolume backed by secondary disk (/mnt/music-vol, 98GB) on node1.
+# Music data lives at /mnt/music-vol/music/audio_complete and is preserved across pod restarts.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: navidrome-music-pv
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  local:
+    path: /mnt/music-vol/music/audio_complete
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - node1
+---
+# PV for music is manually created, backed by /mnt/music-vol (secondary disk, 98GB)
+# See navidrome-music-pv PersistentVolume which references the node's /mnt/music-vol/music/audio_complete
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: navidrome-music-pvc
+  namespace: navidrome-platform
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ""
+  volumeName: navidrome-music-pv
+  resources:
+    requests:
+      storage: 50Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -84,9 +124,8 @@ spec:
           persistentVolumeClaim:
             claimName: navidrome-data-pvc
         - name: navidrome-music
-          hostPath:
-            path: /mnt/music-vol/music/audio_complete
-            type: Directory
+          persistentVolumeClaim:
+            claimName: navidrome-music-pvc
 ---
 apiVersion: v1
 kind: Service
