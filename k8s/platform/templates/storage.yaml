@@ -1,0 +1,63 @@
+---
+# local-path-provisioner config — stores all PVC data on the secondary
+# persistent Cinder volume (/dev/vdb, 100GB ceph-ssd) mounted at /mnt/music-vol.
+# This survives VM reboots and instance re-creation.
+# Applied to the local-path-storage namespace (created by Kubespray).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: local-path-config
+  namespace: local-path-storage
+data:
+  config.json: |
+    {
+      "nodePathMap": [
+        {
+          "node": "DEFAULT_PATH_FOR_NON_LISTED_NODES",
+          "paths": ["/mnt/music-vol/pvc-storage/"]
+        }
+      ]
+    }
+  setup: |-
+    #!/bin/sh
+    set -eu
+    mkdir -m 0777 -p "$VOL_DIR"
+  teardown: |-
+    #!/bin/sh
+    set -eu
+    rm -rf "$VOL_DIR"
+  helperPod.yaml: |-
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: helper-pod
+    spec:
+      containers:
+      - name: helper-pod
+        image: "busybox:latest"
+        imagePullPolicy: IfNotPresent
+---
+# Static PersistentVolume for music files.
+# Backed by /mnt/music-vol/music/audio_complete on the Cinder volume.
+# ReclaimPolicy: Retain — data is never deleted automatically.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: navidrome-music-pv
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  local:
+    path: /mnt/music-vol/music/audio_complete
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - node1
