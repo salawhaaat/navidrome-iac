@@ -229,7 +229,7 @@ spec:
 
           # 1) /health — model_loaded must be true
           for i in $(seq 1 12); do
-            HEALTH=$(curl -sf "$BASE/health" 2>/dev/null || true)
+            HEALTH=$(curl -sfL "$BASE/health" 2>/dev/null || true)
             if echo "$HEALTH" | grep -q '"model_loaded":true'; then
               echo "Health OK: $HEALTH"
               break
@@ -244,7 +244,7 @@ spec:
           fi
 
           # 2) /version — loaded_model_key must match what we just deployed
-          VERSION=$(curl -sf "$BASE/version" 2>/dev/null || true)
+          VERSION=$(curl -sfL "$BASE/version" 2>/dev/null || true)
           echo "Version: $VERSION"
           if ! echo "$VERSION" | grep -q "$EXPECTED_KEY"; then
             echo "FAIL: serving pod loaded wrong model key"
@@ -255,7 +255,7 @@ spec:
           fi
 
           # 3) /recommend-by-tracks — must return recommendations
-          RESP=$(curl -sf -X POST "$BASE/recommend-by-tracks" \
+          RESP=$(curl -sfL -X POST "$BASE/recommend-by-tracks" \
             -H "Content-Type: application/json" \
             -d '{"session_id":"finetune-ci","user_id":0,"track_ids":["1","2","3"],"top_n":5}' \
             2>/dev/null || true)
