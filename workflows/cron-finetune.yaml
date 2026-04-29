@@ -123,8 +123,10 @@ spec:
             path: /tmp/minio_key.txt
       script:
         image: python:3.11-slim
-        command: [python]
+        command: [sh]
         source: |
+          pip install -q requests >&2
+          python3 << 'PYEOF'
           import sys, requests
 
           MLFLOW = "{{inputs.parameters.mlflow-url}}"
@@ -157,6 +159,7 @@ spec:
           print(f"Latest finetune run: {run['info']['run_id']}")
           print(f"MinIO model key: {key}")
           open("/tmp/minio_key.txt", "w").write(key)
+          PYEOF
 
     # ── Template: Save the current MINIO_MODEL_KEY for rollback ──────────
     - name: save-current-key
@@ -278,8 +281,10 @@ spec:
             path: /tmp/result.txt
       script:
         image: python:3.11-slim
-        command: [python]
+        command: [sh]
         source: |
+          pip install -q requests >&2
+          python3 << 'PYEOF'
           import concurrent.futures, requests, statistics, sys, time
 
           URL = "{{inputs.parameters.serve-url}}/recommend-by-tracks"
@@ -343,6 +348,7 @@ spec:
 
           print("PASS")
           open("/tmp/result.txt", "w").write("pass")
+          PYEOF
 
     # ── Template: Rollback to previous model key ──────────────────────────
     - name: restore-key
@@ -382,8 +388,10 @@ spec:
         - name: minio-key
       script:
         image: python:3.11-slim
-        command: [python]
+        command: [sh]
         source: |
+          pip install -q requests >&2
+          python3 << 'PYEOF'
           import requests, sys
 
           MLFLOW = "{{inputs.parameters.mlflow-url}}"
@@ -414,3 +422,4 @@ spec:
 
           print(f"Tagged run {run_id} as deployment_status=live")
           print(f"Model {TARGET_KEY} passed all gates and is now serving production traffic.")
+          PYEOF
