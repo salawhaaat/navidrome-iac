@@ -25,6 +25,10 @@ rules:
   - apiGroups: [""]
     resources: ["pods"]
     verbs: ["get", "list", "watch"]
+  # Needed by Argo script/output-parameter steps to report results
+  - apiGroups: ["argoproj.io"]
+    resources: ["workflowtaskresults"]
+    verbs: ["create", "patch"]
 ---
 apiVersion: v1
 kind: ServiceAccount
